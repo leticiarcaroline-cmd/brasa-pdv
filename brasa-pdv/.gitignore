@@ -1,0 +1,23 @@
+# Build
+target/
+HELP.md
+
+# Dados locais do banco
+data/
+
+# Segredos
+segredos.properties
+.env
+*.env
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# Sistema e logs
+.DS_Store
+*.log

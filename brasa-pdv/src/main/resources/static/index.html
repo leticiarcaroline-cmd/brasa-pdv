@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brasa PDV</title>
+<style>
+  :root {
+    --fundo: #f1f2ee;
+    --papel: #ffffff;
+    --tinta: #1b2420;
+    --suave: #66706a;
+    --linha: #dfe2dc;
+    --verde: #1f5c45;
+    --verde-claro: #e3efe8;
+    --brasa: #bf3a2b;
+    --brasa-claro: #f6e4e1;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--fundo); color: var(--tinta); font: 15px/1.5 var(--sans); }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 600; margin: 0; }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
+  .suave { color: var(--suave); }
+
+  /* campos e botões */
+  label { display: grid; gap: 4px; font-size: 13px; color: var(--suave); }
+  input, select {
+    width: 100%; padding: 9px 10px; background: var(--papel);
+    border: 1px solid var(--linha); border-radius: 6px; color: var(--tinta);
+  }
+  input:disabled, select:disabled { background: var(--fundo); color: var(--suave); }
+  .btn {
+    cursor: pointer; border: 1px solid var(--verde); background: var(--verde); color: #fff;
+    padding: 9px 16px; border-radius: 6px; font-weight: 600;
+  }
+  .btn:hover { background: #184a37; }
+  .btn:disabled { opacity: .6; cursor: wait; }
+  .btn.sec { background: transparent; color: var(--verde); }
+  .btn.sec:hover { background: var(--verde-claro); }
+  .link { cursor: pointer; background: none; border: 0; color: var(--brasa); padding: 2px 4px; font-size: 13px; }
+  .link:hover { text-decoration: underline; }
+  .erro { color: var(--brasa); min-height: 1.4em; margin: 10px 0 0; font-size: 14px; }
+
+  /* login */
+  .login { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+  .login-card { width: min(400px, 100%); background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 32px; }
+  .login-card h1 { font-size: 28px; }
+  .login-card p { margin: 6px 0 22px; }
+  .abas-login { display: flex; gap: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--linha); }
+  .abas-login button { background: none; border: 0; padding: 8px 0; cursor: pointer; color: var(--suave); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .abas-login button.ativa { color: var(--tinta); border-color: var(--verde); font-weight: 600; }
+  .login-card form { display: grid; gap: 14px; }
+
+  /* app */
+  .topo { background: var(--papel); border-bottom: 1px solid var(--linha); }
+  .topo-in, .miolo { width: min(1080px, 100%); margin: 0 auto; padding: 0 20px; }
+  .topo-in { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .marca { font-family: var(--serif); font-size: 20px; font-weight: 600; }
+  .usuario { display: flex; align-items: center; gap: 14px; font-size: 14px; }
+  .miolo { padding-top: 24px; padding-bottom: 60px; display: grid; gap: 22px; }
+
+  .periodo { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+  .periodo label { width: 150px; }
+
+  .hero { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 1.4fr); gap: 36px; align-items: center;
+          background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 26px 28px; }
+  .hero .rotulo { margin: 0; color: var(--suave); }
+  .saldo { margin: 2px 0 4px; font-size: clamp(34px, 6vw, 52px); font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .saldo.pos { color: var(--verde); }
+  .saldo.neg { color: var(--brasa); }
+  .barra { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--fundo); }
+  .barra span { display: block; height: 100%; }
+  #barra-entradas { background: var(--verde); }
+  #barra-saidas { background: var(--brasa); }
+  .fluxo-valores { display: flex; justify-content: space-between; gap: 16px; margin-top: 10px; font-size: 14px; color: var(--suave); }
+  .fluxo-valores b { font-size: 18px; color: var(--tinta); font-variant-numeric: tabular-nums; }
+  .fluxo-valores div:last-child { text-align: right; }
+
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .bloco { background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 22px 24px; }
+  .bloco h2 { font-size: 19px; margin-bottom: 14px; }
+
+  .grafico-box { position: relative; height: 230px; }
+  .vazio { color: var(--suave); padding: 20px 0; }
+  .legenda { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+  .legenda li { display: grid; grid-template-columns: 12px 1fr auto 56px; gap: 10px; align-items: center; }
+  .legenda .ponto { width: 10px; height: 10px; border-radius: 50%; }
+  .legenda .num { font-variant-numeric: tabular-nums; text-align: right; }
+  .legenda .pct { color: var(--suave); }
+
+  .ia-saida { white-space: pre-wrap; line-height: 1.6; margin: 14px 0 0; }
+  .ia-origem { font-size: 13px; color: var(--suave); margin: 10px 0 0; }
+
+  .abas { display: flex; gap: 22px; border-bottom: 1px solid var(--linha); }
+  .abas button { background: none; border: 0; cursor: pointer; padding: 10px 0; color: var(--suave); border-bottom: 2px solid transparent; margin-bottom: -1px; font-size: 15px; }
+  .abas button.ativa { color: var(--tinta); font-weight: 600; border-color: var(--verde); }
+  .painel { display: grid; gap: 16px; }
+
+  .form-linha { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end;
+                background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 16px; }
+  .form-linha .grande { grid-column: span 2; }
+
+  .tabela-box { overflow-x: auto; background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; min-width: 560px; }
+  th { text-align: left; font-weight: 600; font-size: 13px; color: var(--suave); padding: 10px 14px; border-bottom: 1px solid var(--linha); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--linha); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.valor, th.valor { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.entrada { color: var(--verde); font-weight: 600; }
+  td.saida { color: var(--brasa); font-weight: 600; }
+  td small { display: block; color: var(--suave); }
+
+  .lista { list-style: none; margin: 0; padding: 0; background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; }
+  .lista li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--linha); }
+  .lista li:last-child { border-bottom: 0; }
+  .selo { font-size: 12px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
+  .selo.entrada { background: var(--verde-claro); color: var(--verde); }
+  .selo.saida { background: var(--brasa-claro); color: var(--brasa); }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: min(520px, 92vw);
+           background: var(--tinta); color: #fff; padding: 11px 18px; border-radius: 8px; font-size: 14px; z-index: 10; }
+  .toast.erro-toast { background: var(--brasa); }
+
+  @media (max-width: 820px) {
+    .hero, .duas { grid-template-columns: 1fr; }
+    .hero { gap: 22px; }
+    .form-linha .grande { grid-column: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="tela-login" class="login" hidden>
+  <div class="login-card">
+    <h1>Brasa PDV</h1>
+    <p class="suave">Veja o que entra e o que sai, dia a dia.</p>
+    <div class="abas-login">
+      <button type="button" class="ativa" data-login="entrar">Entrar</button>
+      <button type="button" data-login="criar">Criar conta</button>
+    </div>
+    <form id="form-login">
+      <label>Usuário <input name="usuario" autocomplete="username" required></label>
+      <label>Senha <input name="senha" type="password" autocomplete="current-password" required></label>
+      <button class="btn" type="submit">Entrar</button>
+    </form>
+    <form id="form-registro" hidden>
+      <label>Seu nome <input name="nome" autocomplete="name" required></label>
+      <label>Usuário <input name="usuario" autocomplete="username" minlength="3" required></label>
+      <label>Senha (mínimo 6 caracteres) <input name="senha" type="password" autocomplete="new-password" minlength="6" required></label>
+      <button class="btn" type="submit">Criar conta</button>
+    </form>
+    <p id="erro-login" class="erro" role="alert"></p>
+  </div>
+</section>
+
+<!-- APP -->
+<div id="tela-app" hidden>
+  <header class="topo">
+    <div class="topo-in">
+      <span class="marca">Brasa PDV</span>
+      <div class="usuario"><span id="nome-usuario"></span><button id="btn-sair" class="btn sec" type="button">Sair</button></div>
+    </div>
+  </header>
+
+  <main class="miolo">
+    <div class="periodo">
+      <label>De <input id="inicio" type="date"></label>
+      <label>Até <input id="fim" type="date"></label>
+      <button id="btn-atualizar" class="btn sec" type="button">Atualizar</button>
+    </div>
+
+    <section class="hero" aria-live="polite">
+      <div>
+        <p class="rotulo">Saldo do período</p>
+        <p id="saldo" class="saldo">R$ 0,00</p>
+        <p id="margem-texto" class="suave"></p>
+      </div>
+      <div>
+        <div class="barra" aria-hidden="true"><span id="barra-entradas"></span><span id="barra-saidas"></span></div>
+        <div class="fluxo-valores">
+          <div><b id="v-entradas">R$ 0,00</b><br>entraram</div>
+          <div><b id="v-saidas">R$ 0,00</b><br>saíram</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="duas">
+      <section class="bloco">
+        <h2>Para onde vai o dinheiro</h2>
+        <div class="grafico-box"><canvas id="grafico"></canvas></div>
+        <p id="grafico-vazio" class="vazio" hidden>Nenhuma saída nesse período. Registre uma compra para ver o gráfico.</p>
+        <ul id="legenda" class="legenda"></ul>
+      </section>
+      <section class="bloco">
+        <h2>Dicas da IA para o período</h2>
+        <p class="suave" style="margin:0 0 14px">A IA lê os totais por categoria e fornecedor e sugere onde economizar.</p>
+        <button id="btn-ia" class="btn" type="button">Gerar dicas</button>
+        <p id="ia-saida" class="ia-saida"></p>
+        <p id="ia-origem" class="ia-origem"></p>
+      </section>
+    </div>
+
+    <nav class="abas" aria-label="Cadastros">
+      <button type="button" class="ativa" data-aba="lancamentos">Lançamentos</button>
+      <button type="button" data-aba="categorias">Categorias</button>
+      <button type="button" data-aba="fornecedores">Fornecedores</button>
+    </nav>
+
+    <section id="aba-lancamentos" class="painel">
+      <form id="form-lanc" class="form-linha">
+        <label class="grande">Descrição <input name="descricao" maxlength="120" placeholder="Ex.: Picanha 20 kg" required></label>
+        <label>Valor (R$) <input name="valor" type="number" step="0.01" min="0.01" required></label>
+        <label>Tipo
+          <select name="tipo"><option value="SAIDA">Saída (gasto)</option><option value="ENTRADA">Entrada (venda)</option></select>
+        </label>
+        <label>Data <input name="data" type="date" required></label>
+        <label>Categoria <select name="categoriaId" required></select></label>
+        <label>Fornecedor <select name="fornecedorId"></select></label>
+        <button class="btn" type="submit">Registrar lançamento</button>
+      </form>
+      <div class="tabela-box">
+        <table>
+          <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th class="valor">Valor</th><th></th></tr></thead>
+          <tbody id="tbody-lanc"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="aba-categorias" class="painel" hidden>
+      <form id="form-cat" class="form-linha">
+        <label class="grande">Nome da categoria <input name="nome" maxlength="60" placeholder="Ex.: Sobremesas" required></label>
+        <label>Tipo
+          <select name="tipo"><option value="SAIDA">Saída (gasto)</option><option value="ENTRADA">Entrada (venda)</option></select>
+        </label>
+        <button class="btn" type="submit">Adicionar categoria</button>
+      </form>
+      <ul id="lista-cat" class="lista"></ul>
+    </section>
+
+    <section id="aba-fornecedores" class="painel" hidden>
+      <form id="form-forn" class="form-linha">
+        <label class="grande">Nome do fornecedor <input name="nome" maxlength="80" placeholder="Ex.: Frigorífico Boi Bom" required></label>
+        <label>Telefone <input name="telefone" maxlength="30" placeholder="Opcional"></label>
+        <button class="btn" type="submit">Adicionar fornecedor</button>
+      </form>
+      <ul id="lista-forn" class="lista"></ul>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="vendor/chart.umd.js"></script>
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const brl = v => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const pct = v => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const dataBr = iso => iso.split('-').reverse().join('/');
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const CORES = ['#bf3a2b', '#d98a2b', '#c9b037', '#6f9a58', '#3f8a8c', '#4f67a6', '#855aa6', '#a85470'];
+
+  const estado = { categorias: [], fornecedores: [] };
+  let grafico = null;
+  let avisoTimer = null;
+
+  /* ---------- utilidades ---------- */
+  function aviso(msg, erro = false) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.className = 'toast' + (erro ? ' erro-toast' : '');
+    t.hidden = false;
+    clearTimeout(avisoTimer);
+    avisoTimer = setTimeout(() => { t.hidden = true; }, 4000);
+  }
+
+  async function api(url, opts = {}) {
+    const init = { method: opts.method || 'GET', credentials: 'same-origin', headers: {} };
+    if (opts.body !== undefined) {
+      init.headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(opts.body);
+    }
+    const res = await fetch(url, init);
+    if (res.status === 401 && !url.startsWith('/api/auth/')) {
+      mostrarLogin();
+      throw new Error('Sua sessão expirou. Entre novamente.');
+    }
+    const texto = await res.text();
+    let dados = null;
+    if (texto) { try { dados = JSON.parse(texto); } catch (e) { dados = null; } }
+    if (!res.ok) throw new Error((dados && dados.erro) || 'Erro ' + res.status);
+    return dados;
+  }
+
+  const qs = () => 'inicio=' + $('#inicio').value + '&fim=' + $('#fim').value;
+
+  /* ---------- login ---------- */
+  function mostrarLogin() {
+    $('#tela-app').hidden = true;
+    $('#tela-login').hidden = false;
+  }
+
+  async function mostrarApp(usuario) {
+    $('#nome-usuario').textContent = usuario.nome;
+    $('#tela-login').hidden = true;
+    $('#tela-app').hidden = false;
+    if (!$('#inicio').value) {
+      const h = new Date();
+      $('#inicio').value = iso(new Date(h.getFullYear(), h.getMonth(), 1));
+      $('#fim').value = iso(new Date(h.getFullYear(), h.getMonth() + 1, 0));
+      $('#form-lanc').elements.data.value = iso(h);
+    }
+    await carregarCadastros();
+    await atualizarPainel();
+  }
+
+  $$('[data-login]').forEach(b => b.addEventListener('click', () => {
+    const criar = b.dataset.login === 'criar';
+    $$('[data-login]').forEach(x => x.classList.toggle('ativa', x === b));
+    $('#form-login').hidden = criar;
+    $('#form-registro').hidden = !criar;
+    $('#erro-login').textContent = '';
+  }));
+
+  $('#form-login').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target;
+    $('#erro-login').textContent = '';
+    try {
+      const u = await api('/api/auth/login', { method: 'POST', body: { username: f.elements.usuario.value, senha: f.elements.senha.value } });
+      f.reset();
+      await mostrarApp(u);
+    } catch (err) { $('#erro-login').textContent = err.message; }
+  });
+
+  $('#form-registro').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target;
+    $('#erro-login').textContent = '';
+    try {
+      const u = await api('/api/auth/registrar', { method: 'POST', body: { nome: f.elements.nome.value, username: f.elements.usuario.value, senha: f.elements.senha.value } });
+      f.reset();
+      await mostrarApp(u);
+    } catch (err) { $('#erro-login').textContent = err.message; }
+  });
+
+  $('#btn-sair').addEventListener('click', async () => {
+    try { await api('/api/auth/logout', { method: 'POST' }); } catch (e) { /* já saiu */ }
+    mostrarLogin();
+  });
+
+  /* ---------- painel ---------- */
+  async function atualizarPainel() {
+    try {
+      const q = qs();
+      const [resumo, fatias, lancs] = await Promise.all([
+        api('/api/relatorios/resumo?' + q),
+        api('/api/relatorios/saidas-por-categoria?' + q),
+        api('/api/lancamentos?' + q)
+      ]);
+      renderResumo(resumo);
+      renderGrafico(fatias);
+      renderLancamentos(lancs);
+      $('#ia-saida').textContent = '';
+      $('#ia-origem').textContent = '';
+    } catch (err) { aviso(err.message, true); }
+  }
+
+  function renderResumo(r) {
+    const saldo = $('#saldo');
+    saldo.textContent = brl(r.saldo);
+    saldo.className = 'saldo ' + (Number(r.saldo) < 0 ? 'neg' : 'pos');
+    $('#v-entradas').textContent = brl(r.totalEntradas);
+    $('#v-saidas').textContent = brl(r.totalSaidas);
+    const ent = Number(r.totalEntradas), sai = Number(r.totalSaidas), total = ent + sai;
+    $('#barra-entradas').style.width = total ? (ent / total * 100) + '%' : '0';
+    $('#barra-saidas').style.width = total ? (sai / total * 100) + '%' : '0';
+    const m = Number(r.margemPercentual);
+    $('#margem-texto').textContent = ent === 0
+      ? 'Ainda não há vendas registradas nesse período.'
+      : (m >= 0 ? 'Sobram ' + brl(m) + ' de cada R$ 100 que entram.' : 'Faltam ' + brl(-m) + ' de cada R$ 100 que entram.');
+  }
+
+  function renderGrafico(fatias) {
+    const canvas = $('#grafico'), vazio = $('#grafico-vazio'), legenda = $('#legenda');
+    if (grafico) { grafico.destroy(); grafico = null; }
+    if (!fatias.length) {
+      canvas.parentElement.hidden = true;
+      vazio.hidden = false;
+      legenda.innerHTML = '';
+      return;
+    }
+    canvas.parentElement.hidden = false;
+    vazio.hidden = true;
+    const cores = fatias.map((_, i) => CORES[i % CORES.length]);
+    legenda.innerHTML = fatias.map((f, i) =>
+      '<li><span class="ponto" style="background:' + cores[i] + '"></span><span>' + esc(f.nome) +
+      '</span><span class="num">' + brl(f.total) + '</span><span class="num pct">' + pct(f.percentual) + '</span></li>').join('');
+    if (window.Chart) {
+      grafico = new Chart(canvas, {
+        type: 'doughnut',
+        data: { labels: fatias.map(f => f.nome), datasets: [{ data: fatias.map(f => Number(f.total)), backgroundColor: cores, borderWidth: 2, borderColor: '#fff' }] },
+        options: {
+          maintainAspectRatio: false, cutout: '62%',
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + brl(c.parsed) } } }
+        }
+      });
+    }
+  }
+
+  function renderLancamentos(lista) {
+    const corpo = $('#tbody-lanc');
+    if (!lista.length) {
+      corpo.innerHTML = '<tr><td colspan="5" class="suave">Nenhum lançamento nesse período. Registre o primeiro no formulário acima.</td></tr>';
+      return;
+    }
+    corpo.innerHTML = lista.map(l => {
+      const entrada = l.tipo === 'ENTRADA';
+      return '<tr><td>' + dataBr(l.data) + '</td>' +
+        '<td>' + esc(l.descricao) + (l.fornecedor ? '<small>' + esc(l.fornecedor) + '</small>' : '') + '</td>' +
+        '<td>' + esc(l.categoria) + '</td>' +
+        '<td class="valor ' + (entrada ? 'entrada' : 'saida') + '">' + (entrada ? '+ ' : '- ') + brl(l.valor) + '</td>' +
+        '<td><button class="link" data-apagar="' + l.id + '" type="button">Apagar</button></td></tr>';
+    }).join('');
+  }
+
+  $('#btn-atualizar').addEventListener('click', atualizarPainel);
+  $('#inicio').addEventListener('change', atualizarPainel);
+  $('#fim').addEventListener('change', atualizarPainel);
+
+  $('#tbody-lanc').addEventListener('click', async e => {
+    const id = e.target.dataset.apagar;
+    if (!id || !confirm('Apagar este lançamento?')) return;
+    try { await api('/api/lancamentos/' + id, { method: 'DELETE' }); aviso('Lançamento apagado'); await atualizarPainel(); }
+    catch (err) { aviso(err.message, true); }
+  });
+
+  /* ---------- lançamentos ---------- */
+  function preencherSelects() {
+    const f = $('#form-lanc');
+    const tipo = f.elements.tipo.value;
+    const cats = estado.categorias.filter(c => c.tipo === tipo);
+    f.elements.categoriaId.innerHTML = cats.length
+      ? cats.map(c => '<option value="' + c.id + '">' + esc(c.nome) + '</option>').join('')
+      : '<option value="">Crie uma categoria primeiro</option>';
+    f.elements.fornecedorId.innerHTML = '<option value="">Sem fornecedor</option>' +
+      estado.fornecedores.map(x => '<option value="' + x.id + '">' + esc(x.nome) + '</option>').join('');
+    f.elements.fornecedorId.disabled = tipo === 'ENTRADA';
+  }
+
+  $('#form-lanc').elements.tipo.addEventListener('change', preencherSelects);
+
+  $('#form-lanc').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target;
+    try {
+      await api('/api/lancamentos', { method: 'POST', body: {
+        descricao: f.elements.descricao.value.trim(),
+        valor: Number(f.elements.valor.value),
+        tipo: f.elements.tipo.value,
+        data: f.elements.data.value,
+        categoriaId: f.elements.categoriaId.value ? Number(f.elements.categoriaId.value) : null,
+        fornecedorId: f.elements.fornecedorId.value && !f.elements.fornecedorId.disabled ? Number(f.elements.fornecedorId.value) : null
+      } });
+      f.elements.descricao.value = '';
+      f.elements.valor.value = '';
+      aviso('Lançamento registrado');
+      await atualizarPainel();
+    } catch (err) { aviso(err.message, true); }
+  });
+
+  /* ---------- categorias e fornecedores ---------- */
+  async function carregarCadastros() {
+    try {
+      [estado.categorias, estado.fornecedores] = await Promise.all([api('/api/categorias'), api('/api/fornecedores')]);
+      preencherSelects();
+      $('#lista-cat').innerHTML = estado.categorias.map(c =>
+        '<li><span>' + esc(c.nome) + '<span class="selo ' + (c.tipo === 'ENTRADA' ? 'entrada">entrada' : 'saida">saída') + '</span></span>' +
+        '<button class="link" data-apagar-cat="' + c.id + '" type="button">Apagar</button></li>').join('');
+      $('#lista-forn').innerHTML = estado.fornecedores.length ? estado.fornecedores.map(x =>
+        '<li><span>' + esc(x.nome) + (x.telefone ? ' <span class="suave">(' + esc(x.telefone) + ')</span>' : '') + '</span>' +
+        '<button class="link" data-apagar-forn="' + x.id + '" type="button">Apagar</button></li>').join('')
+        : '<li class="suave">Nenhum fornecedor cadastrado ainda.</li>';
+    } catch (err) { aviso(err.message, true); }
+  }
+
+  $('#lista-cat').addEventListener('click', async e => {
+    const id = e.target.dataset.apagarCat;
+    if (!id || !confirm('Apagar esta categoria?')) return;
+    try { await api('/api/categorias/' + id, { method: 'DELETE' }); aviso('Categoria apagada'); await carregarCadastros(); }
+    catch (err) { aviso(err.message, true); }
+  });
+
+  $('#lista-forn').addEventListener('click', async e => {
+    const id = e.target.dataset.apagarForn;
+    if (!id || !confirm('Apagar este fornecedor?')) return;
+    try { await api('/api/fornecedores/' + id, { method: 'DELETE' }); aviso('Fornecedor apagado'); await carregarCadastros(); }
+    catch (err) { aviso(err.message, true); }
+  });
+
+  $('#form-cat').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target;
+    try {
+      await api('/api/categorias', { method: 'POST', body: { nome: f.elements.nome.value.trim(), tipo: f.elements.tipo.value } });
+      f.elements.nome.value = '';
+      aviso('Categoria adicionada');
+      await carregarCadastros();
+    } catch (err) { aviso(err.message, true); }
+  });
+
+  $('#form-forn').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target;
+    try {
+      await api('/api/fornecedores', { method: 'POST', body: { nome: f.elements.nome.value.trim(), telefone: f.elements.telefone.value.trim() } });
+      f.reset();
+      aviso('Fornecedor adicionado');
+      await carregarCadastros();
+    } catch (err) { aviso(err.message, true); }
+  });
+
+  /* ---------- abas ---------- */
+  $$('[data-aba]').forEach(b => b.addEventListener('click', () => {
+    $$('[data-aba]').forEach(x => x.classList.toggle('ativa', x === b));
+    ['lancamentos', 'categorias', 'fornecedores'].forEach(n => { $('#aba-' + n).hidden = n !== b.dataset.aba; });
+  }));
+
+  /* ---------- IA ---------- */
+  $('#btn-ia').addEventListener('click', async () => {
+    const btn = $('#btn-ia');
+    btn.disabled = true;
+    $('#ia-origem').textContent = '';
+    $('#ia-saida').textContent = 'Analisando os números do período...';
+    try {
+      const r = await api('/api/ia/dicas?' + qs(), { method: 'POST' });
+      $('#ia-saida').textContent = r.texto;
+      $('#ia-origem').textContent = r.origem === 'ia' ? 'Análise feita pelo Claude.' : 'Dicas básicas, calculadas sem IA.';
+    } catch (err) {
+      $('#ia-saida').textContent = err.message;
+    } finally { btn.disabled = false; }
+  });
+
+  /* ---------- início ---------- */
+  api('/api/auth/eu').then(mostrarApp).catch(mostrarLogin);
+})();
+</script>
+</body>
+</html>
